@@ -1,0 +1,8 @@
+{
+  "name": "Remix FactoryMind_AI",
+  "description": "Imported from GitHub: Shuzaifa12/FactoryMind_AI",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

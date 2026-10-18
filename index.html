@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FactoryMind AI</title>
+    <meta name="description" content="Detect anomalies. Prioritize maintenance. Protect production." />
+    <meta property="og:title" content="FactoryMind AI" />
+    <meta property="og:description" content="Detect anomalies. Prioritize maintenance. Protect production." />
+    <script>
+      (function(){
+        try {
+          var l = localStorage.getItem("fm-locale");
+          if (l === "ur") {
+            var d = document.documentElement;
+            d.lang = "ur";
+            d.dir = "rtl";
+          }
+          var t = localStorage.getItem("fm-theme");
+          if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch(e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
