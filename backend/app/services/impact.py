@@ -70,7 +70,7 @@ def compute_alert_impact(
     repair_cost: float | None,
     criticality: int | None,
     severity: str,
-    formula_version: str = "v1.0 (Downtime_Hrs × Loss_Rate + Repair_Cost)",
+    formula_version: str = "v1.0",
 ) -> dict[str, Any]:
     dt_loss = calculate_downtime_loss(assumed_hours, loss_per_hour)
     tot_impact = calculate_total_impact(dt_loss, repair_cost)
