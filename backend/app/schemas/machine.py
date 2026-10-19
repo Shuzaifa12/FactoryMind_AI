@@ -1,4 +1,4 @@
-from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -14,10 +14,10 @@ class MachineResponse(BaseModel):
     dataset_id: int
     external_id: str
     name: str
-    criticality: Optional[int] = None
-    production_priority: Optional[int] = None
-    loss_per_hour: Optional[float] = None
-    maintenance_cost_estimate: Optional[float] = None
+    criticality: int | None = None
+    production_priority: int | None = None
+    loss_per_hour: float | None = None
+    maintenance_cost_estimate: float | None = None
     assumption_source: str
     active_alerts_count: int = 0
 
@@ -25,16 +25,16 @@ class MachineResponse(BaseModel):
 class SensorReadingResponse(BaseModel):
     timestamp: str
     machine_id: str
-    temperature: Optional[float] = None
-    vibration: Optional[float] = None
-    current: Optional[float] = None
+    temperature: float | None = None
+    vibration: float | None = None
+    current: float | None = None
     is_anomalous: bool = False
 
 
 class MaintenanceRecordResponse(BaseModel):
     id: int
     machine_id: str
-    date: Optional[str] = None
+    date: str | None = None
     description: str
     source: str = "csv"
     match_confidence: str = "exact_id"

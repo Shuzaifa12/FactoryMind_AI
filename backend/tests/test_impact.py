@@ -1,4 +1,5 @@
 import pytest
+
 from app.services.impact import (
     calculate_downtime_loss,
     calculate_priority_score,

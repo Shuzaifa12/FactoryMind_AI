@@ -1,9 +1,10 @@
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api import alerts, assistant, datasets, demo, health, machines
 from app.core.config import get_settings
@@ -22,7 +23,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         Base.metadata.create_all(bind=engine)
         logging.getLogger("factorymind").info("Database tables verified and initialized")
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         logging.getLogger("factorymind").error(f"Database table initialization notice: {exc}")
     yield
 

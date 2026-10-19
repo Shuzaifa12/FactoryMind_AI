@@ -1,6 +1,6 @@
 import io
+
 from fastapi.testclient import TestClient
-import pytest
 
 
 def test_numeric_sensor_parsing_with_whitespace_and_strings(client: TestClient):

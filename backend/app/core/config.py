@@ -1,6 +1,5 @@
 import re
 from functools import lru_cache
-from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,7 +31,7 @@ class Settings(BaseSettings):
     )
 
     @property
-    def cors_origin_list(self) -> List[str]:
+    def cors_origin_list(self) -> list[str]:
         if not self.cors_origins:
             return []
         origins = [orig.strip() for orig in self.cors_origins.split(",") if orig.strip()]
@@ -46,7 +45,7 @@ class Settings(BaseSettings):
     def sqlalchemy_database_url(self) -> str:
         url = self.database_url
         # If using standard postgresql:// URL, convert to psycopg3 driver prefix
-        if url.startswith("postgresql://") or url.startswith("postgres://"):
+        if url.startswith(("postgresql://", "postgres://")):
             url = re.sub(r"^postgres(ql)?://", "postgresql+psycopg://", url)
         return url
 

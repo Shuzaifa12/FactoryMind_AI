@@ -1,4 +1,5 @@
 import io
+
 from fastapi.testclient import TestClient
 
 
@@ -54,7 +55,6 @@ def test_demo_load_creates_four_machines_and_alerts(client: TestClient):
 
 
 def test_demo_load_repeatability(client: TestClient):
-    # Loading demo repeatedly resets without duplicating or corrupting state
     res1 = client.post("/api/v1/demo/load")
     assert res1.status_code == 200
     id1 = res1.json()["id"]
@@ -62,6 +62,8 @@ def test_demo_load_repeatability(client: TestClient):
     res2 = client.post("/api/v1/demo/load")
     assert res2.status_code == 200
     id2 = res2.json()["id"]
+
+    assert id1 == id2
 
     # Only 4 machines should exist in the current active dataset
     mach_res = client.get(f"/api/v1/datasets/{id2}/machines")

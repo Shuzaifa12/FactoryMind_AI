@@ -1,11 +1,15 @@
-from typing import List, Optional
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.db.models import Alert, Machine
 from app.db.session import get_db
-from app.schemas.alert import AlertResponse, ImpactEstimateResponse, UpdateAlertStatusRequest
+from app.schemas.alert import (
+    AlertResponse,
+    ImpactEstimateResponse,
+    UpdateAlertStatusRequest,
+)
 
 router = APIRouter(tags=["alerts"])
 
@@ -51,14 +55,14 @@ def _format_alert(a: Alert, mach: Machine) -> AlertResponse:
     )
 
 
-@router.get("/datasets/{dataset_id}/alerts", response_model=List[AlertResponse])
+@router.get("/datasets/{dataset_id}/alerts", response_model=list[AlertResponse])
 def get_dataset_alerts(
     dataset_id: int,
-    severity: Optional[str] = Query(default=None),
-    machine_id: Optional[str] = Query(default=None),
-    status_filter: Optional[str] = Query(default=None, alias="status"),
+    severity: str | None = Query(default=None),
+    machine_id: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
     db: Session = Depends(get_db),
-) -> List[AlertResponse]:
+) -> list[AlertResponse]:
     q = db.query(Alert, Machine).join(Machine, Alert.machine_id == Machine.id).filter(Alert.dataset_id == dataset_id)
 
     if severity and severity.lower() != "all":

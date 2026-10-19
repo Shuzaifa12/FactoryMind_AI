@@ -2,8 +2,8 @@
 
 import io
 import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -13,12 +13,16 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.db.models import Dataset, Machine, SensorReading
-from app.schemas.dataset import ColumnMappingRequest, QualityReport, UploadPreviewResponse
+from app.schemas.dataset import (
+    ColumnMappingRequest,
+    QualityReport,
+    UploadPreviewResponse,
+)
 
 settings = get_settings()
 
 
-def parse_numeric_series(series: pd.Series) -> List[Optional[float]]:
+def parse_numeric_series(series: pd.Series) -> list[float | None]:
     """Converts a pandas Series to a list of Optional[float].
 
     Robustness guarantees:
@@ -44,11 +48,11 @@ def parse_numeric_series(series: pd.Series) -> List[Optional[float]]:
     return [float(x) if np.isfinite(x) else None for x in arr]
 
 
-def suggest_column_mappings(columns: List[str]) -> Dict[str, Optional[str]]:
+def suggest_column_mappings(columns: list[str]) -> dict[str, str | None]:
     """Heuristically suggests mappings for standard industrial channels."""
     lower_map = {c.lower().strip(): c for c in columns}
 
-    def find_match(*keywords: str) -> Optional[str]:
+    def find_match(*keywords: str) -> str | None:
         for kw in keywords:
             for l_col, orig_col in lower_map.items():
                 if kw in l_col:
@@ -83,7 +87,7 @@ def suggest_column_mappings(columns: List[str]) -> Dict[str, Optional[str]]:
 
 def parse_and_validate_file(
     content: bytes, filename: str
-) -> Tuple[pd.DataFrame, str, List[str]]:
+) -> tuple[pd.DataFrame, str, list[str]]:
     """Parses raw CSV or XLSX bytes into a pandas DataFrame with validation."""
     max_bytes = settings.max_upload_mb * 1024 * 1024
     if len(content) > max_bytes:
@@ -93,7 +97,7 @@ def parse_and_validate_file(
         )
 
     ext = os.path.splitext(filename)[1].lower()
-    warnings = []
+    warnings: list[str] = []
 
     try:
         if ext in [".csv", ".txt"]:
@@ -112,7 +116,7 @@ def parse_and_validate_file(
             raise
         raise AppError(
             code="FILE_PARSE_ERROR",
-            message=f"Could not parse uploaded spreadsheet: {str(e)}",
+            message=f"Could not parse uploaded spreadsheet: {e!s}",
         )
 
     if df.empty or len(df) == 0:
@@ -142,7 +146,7 @@ def create_uploaded_dataset(
 
     # Save content to disk in uploads directory
     os.makedirs(settings.upload_dir, exist_ok=True)
-    safe_filename = f"{int(datetime.now(timezone.utc).timestamp())}_{filename}"
+    safe_filename = f"{int(datetime.now(UTC).timestamp())}_{filename}"
     file_path = os.path.join(settings.upload_dir, safe_filename)
     with open(file_path, "wb") as f:
         f.write(content)
@@ -279,7 +283,7 @@ def apply_column_mapping(
         if total_valid_sensor_cells == 0:
             notes.append("Warning: None of the mapped sensor columns contain valid numeric values.")
 
-    quality = {
+    quality: dict[str, Any] = {
         "total_rows": len(df),
         "valid_rows": len(df) - invalid_ts_count,
         "missing_values_count": int(df.isna().sum().sum()),
@@ -312,7 +316,7 @@ def ingest_and_process_dataset(
     db: Session,
     dataset_id: int,
     contamination: float = 0.1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Ingests mapped readings into DB tables and executes Anomaly Detection."""
     dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
     if not dataset:

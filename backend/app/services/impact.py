@@ -2,12 +2,12 @@
 Deterministic calculations implemented in pure Python independent of LLMs.
 """
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 
 def calculate_downtime_loss(
-    downtime_hours: Optional[float], loss_per_hour: Optional[float]
-) -> Optional[float]:
+    downtime_hours: float | None, loss_per_hour: float | None
+) -> float | None:
     """Calculates downtime loss = downtime_hours * loss_per_hour.
     Returns None if either input is missing or unknown.
     """
@@ -19,8 +19,8 @@ def calculate_downtime_loss(
 
 
 def calculate_total_impact(
-    downtime_loss: Optional[float], maintenance_cost: Optional[float]
-) -> Optional[float]:
+    downtime_loss: float | None, maintenance_cost: float | None
+) -> float | None:
     """Total impact = downtime_loss + maintenance_cost.
     Avoids double counting. If downtime_loss is unknown, returns maintenance_cost if available.
     """
@@ -35,9 +35,9 @@ def calculate_total_impact(
 
 
 def calculate_priority_score(
-    criticality: Optional[int],
+    criticality: int | None,
     severity: str,
-    total_impact: Optional[float],
+    total_impact: float | None,
 ) -> float:
     """Calculates operational priority score (0 to 100).
     Factors in machine criticality (1-5), severity tier, and financial magnitude.
@@ -65,13 +65,13 @@ def calculate_priority_score(
 
 
 def compute_alert_impact(
-    assumed_hours: Optional[float],
-    loss_per_hour: Optional[float],
-    repair_cost: Optional[float],
-    criticality: Optional[int],
+    assumed_hours: float | None,
+    loss_per_hour: float | None,
+    repair_cost: float | None,
+    criticality: int | None,
     severity: str,
     formula_version: str = "v1.0 (Downtime_Hrs × Loss_Rate + Repair_Cost)",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     dt_loss = calculate_downtime_loss(assumed_hours, loss_per_hour)
     tot_impact = calculate_total_impact(dt_loss, repair_cost)
     priority = calculate_priority_score(criticality, severity, tot_impact)

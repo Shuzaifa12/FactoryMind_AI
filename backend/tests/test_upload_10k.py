@@ -1,7 +1,7 @@
 import io
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 from fastapi.testclient import TestClient
-import pytest
 
 
 def generate_deterministic_10k_csv() -> bytes:
@@ -13,7 +13,7 @@ def generate_deterministic_10k_csv() -> bytes:
     - 3 invalid timestamp strings
     """
     lines = ["timestamp,machine_id,temperature,vibration,current"]
-    base_time = datetime(2026, 10, 18, 0, 0, 0, tzinfo=timezone.utc)
+    base_time = datetime(2026, 10, 18, 0, 0, 0, tzinfo=UTC)
 
     for i in range(1, 9996):
         # Alternate machines

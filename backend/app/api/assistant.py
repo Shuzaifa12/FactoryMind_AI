@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, Depends, status
+from typing import Any
+
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/assistant", tags=["assistant"])
 
 class AssistantQueryRequest(BaseModel):
     prompt: str = Field(..., description="User prompt or investigation request")
-    dataset_id: Optional[int] = Field(None, description="Active dataset ID to scope all tool calls")
+    dataset_id: int | None = Field(None, description="Active dataset ID to scope all tool calls")
     language: str = Field("en", description="Response language ('en' or 'ur')")
 
 
@@ -19,7 +20,7 @@ class AssistantQueryRequest(BaseModel):
 def assistant_chat(
     req: AssistantQueryRequest,
     db: Session = Depends(get_db),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Execute tool-grounded AI agent investigation for the active dataset.
     """

@@ -1,15 +1,16 @@
+import logging
 import os
 import re
-import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from sqlalchemy.orm import Session
 
-from app.db.models import Alert, Dataset, Machine, MaintenanceRecord, SensorReading
 from app.core.errors import AppError
+from app.db.models import Alert, Dataset, Machine, MaintenanceRecord, SensorReading
 
 logger = logging.getLogger("factorymind")
 
-def execute_tool_dispatch(db: Session, dataset_id: int, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+def execute_tool_dispatch(db: Session, dataset_id: int, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     """Execute backend tool calls strictly scoped to dataset_id."""
     dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
     if not dataset:
@@ -20,16 +21,24 @@ def execute_tool_dispatch(db: Session, dataset_id: int, tool_name: str, argument
         alert = db.query(Alert).filter(Alert.dataset_id == dataset_id, Alert.id == alert_id).first()
         if not alert:
             return {"error": f"Alert #{alert_id} not found in dataset {dataset.name}"}
+        machine = db.query(Machine).filter(
+                  Machine.id == alert.machine_id,
+                  Machine.dataset_id == dataset_id,
+        ).first()
         return {
             "alert_id": alert.id,
             "machine_id": alert.machine_id,
-            "machine_name": alert.machine_name,
+            "machine_name": (
+                      machine.name if machine else f"Machine {alert.machine_id}"
+             ),
             "severity": alert.severity,
             "anomaly_score": alert.anomaly_score,
             "status": alert.status,
             "evidence": alert.evidence,
             "inspection_steps": alert.inspection_steps,
-            "impact": alert.impact_estimates[0].__dict__ if alert.impact_estimates else None
+            "impact": (
+                     alert.impact_estimates[0].__dict__ if alert.impact_estimates else None
+           ),
         }
 
     elif tool_name == "get_sensor_summary":
@@ -69,7 +78,7 @@ def execute_tool_dispatch(db: Session, dataset_id: int, tool_name: str, argument
     return {"error": f"Unknown tool: {tool_name}"}
 
 
-def process_assistant_query(db: Session, dataset_id: int, prompt: str, language: str = "en") -> Dict[str, Any]:
+def process_assistant_query(db: Session, dataset_id: int, prompt: str, language: str = "en") -> dict[str, Any]:
     """
     Core AI investigation agent logic.
     Strictly scopes all queries and tools to the requested dataset_id.
@@ -114,17 +123,6 @@ def process_assistant_query(db: Session, dataset_id: int, prompt: str, language:
     web_search_used = False
     sources = []
 
-    # Check for GEMINI_API_KEY
-    api_key = os.getenv("GEMINI_API_KEY")
-    if api_key:
-        try:
-            from google import genai
-            client = genai.Client(api_key=api_key)
-            # We can use Gemini model for advanced reasoning with tool results
-            ai_provider_active = True
-        except Exception as e:
-            logger.warning(f"Failed to initialize google-genai client: {e}")
-
     if requested_alert_id is not None and not target_alert:
         tool_calls.append({
             "tool": "get_alert_details",
@@ -158,7 +156,7 @@ def process_assistant_query(db: Session, dataset_id: int, prompt: str, language:
             "result": {"records_count": len(recs)}
         })
 
-        for ev in target_alert.evidence:
+        for ev in (target_alert.evidence or []):
             evidence_cited.append(f"{target_alert.machine_id} {ev.get('feature', 'Sensor')}: {ev.get('observed_value')} {ev.get('unit')} (Baseline {ev.get('baseline_median')})")
 
         total_impact = impact.total_estimated_impact if impact else 0.0
@@ -185,11 +183,11 @@ def process_assistant_query(db: Session, dataset_id: int, prompt: str, language:
         if "bearing" in p or "vibration" in p or "pump" in p or "extruder" in p:
             web_search_used = True
             sources.append({
-                "title": f"ISO 10816 Vibration Severity Guidelines for Industrial Rotating Machinery",
+                "title": "ISO 10816 Vibration Severity Guidelines for Industrial Rotating Machinery",
                 "url": "https://www.iso.org/standard/25732.html"
             })
             sources.append({
-                "title": f"IEEE Industrial Asset Reliability & Maintenance Manual",
+                "title": "IEEE Industrial Asset Reliability & Maintenance Manual",
                 "url": "https://standards.ieee.org/standard/industrial_reliability"
             })
 

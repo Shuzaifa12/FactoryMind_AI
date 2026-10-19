@@ -1,8 +1,8 @@
 """Anomaly detection engine using scikit-learn Isolation Forest with statistical rule fallback."""
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -25,7 +25,7 @@ def compute_mad(series: pd.Series) -> float:
 
 def run_isolation_forest(
     features_df: pd.DataFrame, contamination: float = 0.1
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Runs scikit-learn Isolation Forest on validated numerical columns.
     Returns: (is_anomaly_labels: bool[], anomaly_scores: float[])
     Note: Anomaly scores are relative uncalibrated detector scores (0.0 to 1.0),
@@ -57,7 +57,7 @@ def detect_anomalies_for_dataset(
     dataset_id: int,
     contamination: float = 0.1,
     min_samples_for_ml: int = 15,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Detects anomalies across all sensor readings in a dataset."""
     # Query specific columns as tuples for fast vectorized DataFrame construction
     reading_rows = (
@@ -91,7 +91,7 @@ def detect_anomalies_for_dataset(
     if len(df) < min_samples_for_ml:
         method = "rule_fallback"
 
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
     proc_run = ProcessingRun(
         dataset_id=dataset_id,
         method=method,
@@ -244,7 +244,7 @@ def detect_anomalies_for_dataset(
         total_alerts_created += 1
 
     proc_run.status = "completed"
-    proc_run.finished_at = datetime.now(timezone.utc)
+    proc_run.finished_at = datetime.now(UTC)
     db.commit()
 
     return {

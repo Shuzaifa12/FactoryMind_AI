@@ -5,22 +5,17 @@ and runs the anomaly detection pipeline to produce traceable alerts and impact e
 """
 
 import math
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Any
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.db.models import (
-    Alert,
     Dataset,
-    ImpactEstimate,
     Machine,
     MaintenanceRecord,
-    ProcessingRun,
     SensorReading,
 )
 from app.services.anomaly_detector import detect_anomalies_for_dataset
-
 
 DEMO_MACHINES_CONFIG = [
     {
@@ -64,28 +59,28 @@ DEMO_MACHINES_CONFIG = [
 DEMO_MAINTENANCE_LOGS = [
     {
         "machine_id": "CNC-01",
-        "date": datetime(2026, 9, 12, 9, 0, tzinfo=timezone.utc),
+        "date": datetime(2026, 9, 12, 9, 0, tzinfo=UTC),
         "description": "Scheduled spindle bearing inspection and high-speed grease replenishment.",
         "source": "pdf",
         "match_confidence": "exact_id",
     },
     {
         "machine_id": "PRESS-04",
-        "date": datetime(2026, 8, 4, 14, 30, tzinfo=timezone.utc),
+        "date": datetime(2026, 8, 4, 14, 30, tzinfo=UTC),
         "description": "Hydraulic piston seal replacement and oil filter change.",
         "source": "csv",
         "match_confidence": "exact_id",
     },
     {
         "machine_id": "PUMP-12",
-        "date": datetime(2026, 7, 20, 11, 15, tzinfo=timezone.utc),
+        "date": datetime(2026, 7, 20, 11, 15, tzinfo=UTC),
         "description": "Suction strainer flushed; impeller inspected for cavitation wear.",
         "source": "pdf",
         "match_confidence": "exact_id",
     },
     {
         "machine_id": "CONV-02",
-        "date": datetime(2026, 9, 28, 8, 0, tzinfo=timezone.utc),
+        "date": datetime(2026, 9, 28, 8, 0, tzinfo=UTC),
         "description": "Conveyor drive roller alignment and belt tension calibration.",
         "source": "csv",
         "match_confidence": "exact_id",
@@ -164,7 +159,7 @@ def load_or_reset_demo_dataset(db: Session) -> Dataset:
         db.add(record)
 
     # Generate 50 points (spaced 45 mins apart) for each of the 4 machines = 200 rows
-    base_time = datetime(2026, 10, 16, 0, 0, tzinfo=timezone.utc)
+    base_time = datetime(2026, 10, 16, 0, 0, tzinfo=UTC)
     total_points = 50
 
     for i in range(total_points):

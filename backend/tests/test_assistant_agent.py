@@ -1,7 +1,4 @@
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-from app.db.models import Dataset, Machine, Alert, ImpactEstimate
 
 
 def test_assistant_chat_endpoint_reachable(client: TestClient):

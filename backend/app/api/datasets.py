@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+from typing import Any
+
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -118,5 +119,5 @@ def process_dataset(
     dataset_id: int,
     req: ProcessDatasetRequest,
     db: Session = Depends(get_db),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return ingest_and_process_dataset(db, dataset_id, contamination=req.contamination)

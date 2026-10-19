@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 from app.services.anomaly_detector import compute_mad, run_isolation_forest
 
 

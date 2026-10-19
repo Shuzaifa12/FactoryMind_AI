@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -12,12 +13,12 @@ class SensorEvidenceItem(BaseModel):
 
 
 class ImpactEstimateResponse(BaseModel):
-    assumed_downtime_hours: Optional[float] = None
-    downtime_loss: Optional[float] = None
-    maintenance_cost: Optional[float] = None
-    total_estimated_impact: Optional[float] = None
-    priority_score: Optional[float] = None
-    inputs_used: Optional[Dict[str, Any]] = None
+    assumed_downtime_hours: float | None = None
+    downtime_loss: float | None = None
+    maintenance_cost: float | None = None
+    total_estimated_impact: float | None = None
+    priority_score: float | None = None
+    inputs_used: dict[str, Any] | None = None
     formula_version: str
 
 
@@ -28,13 +29,13 @@ class AlertResponse(BaseModel):
     machine_name: str
     start_ts: datetime
     end_ts: datetime
-    anomaly_score: Optional[float] = None
+    anomaly_score: float | None = None
     is_anomaly_label: bool = True
     severity: str
-    severity_reason: List[str]
-    evidence: List[Dict[str, Any]]
-    data_quality_warnings: List[str]
-    inspection_steps: List[str]
+    severity_reason: list[str]
+    evidence: list[dict[str, Any]]
+    data_quality_warnings: list[str]
+    inspection_steps: list[str]
     status: str
     impact: ImpactEstimateResponse
 

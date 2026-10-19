@@ -3,8 +3,6 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.api import health as health_module
-from app.core.config import get_settings
 from app.db.session import get_db
 from app.main import create_app
 

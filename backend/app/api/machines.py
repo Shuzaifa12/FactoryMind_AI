@@ -1,4 +1,3 @@
-from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
@@ -16,8 +15,8 @@ from app.services.impact import compute_alert_impact
 router = APIRouter(tags=["machines"])
 
 
-@router.get("/datasets/{dataset_id}/machines", response_model=List[MachineResponse])
-def get_dataset_machines(dataset_id: int, db: Session = Depends(get_db)) -> List[MachineResponse]:
+@router.get("/datasets/{dataset_id}/machines", response_model=list[MachineResponse])
+def get_dataset_machines(dataset_id: int, db: Session = Depends(get_db)) -> list[MachineResponse]:
     machines = db.query(Machine).filter(Machine.dataset_id == dataset_id).all()
     results = []
     for m in machines:
@@ -127,12 +126,12 @@ def update_machine_assumptions(
     )
 
 
-@router.get("/machines/{machine_id}/readings", response_model=List[SensorReadingResponse])
+@router.get("/machines/{machine_id}/readings", response_model=list[SensorReadingResponse])
 def get_machine_sensor_readings(
     machine_id: int,
     limit: int = Query(default=100, ge=1, le=1000),
     db: Session = Depends(get_db),
-) -> List[SensorReadingResponse]:
+) -> list[SensorReadingResponse]:
     m = db.query(Machine).filter(Machine.id == machine_id).first()
     if not m:
         raise AppError(code="MACHINE_NOT_FOUND", message=f"Machine {machine_id} not found", status_code=status.HTTP_404_NOT_FOUND)
@@ -160,11 +159,11 @@ def get_machine_sensor_readings(
     return results
 
 
-@router.get("/machines/{machine_id}/maintenance", response_model=List[MaintenanceRecordResponse])
+@router.get("/machines/{machine_id}/maintenance", response_model=list[MaintenanceRecordResponse])
 def get_machine_maintenance_records(
     machine_id: int,
     db: Session = Depends(get_db),
-) -> List[MaintenanceRecordResponse]:
+) -> list[MaintenanceRecordResponse]:
     m = db.query(Machine).filter(Machine.id == machine_id).first()
     if not m:
         raise AppError(
