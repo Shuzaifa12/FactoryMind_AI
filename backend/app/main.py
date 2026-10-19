@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api import alerts, assistant, datasets, demo, health, machines
@@ -21,10 +22,39 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         from app.db.models import Base
         from app.db.session import engine
 
+        # Base.metadata.create_all(bind=engine)
+        # logging.getLogger("factorymind").info("Database tables verified and initialized")
         Base.metadata.create_all(bind=engine)
-        logging.getLogger("factorymind").info("Database tables verified and initialized")
+
+        # Safely add the new column to existing SQLite/PostgreSQL databases.
+        dataset_columns = {
+            column["name"] for column in inspect(engine).get_columns("datasets")
+        }
+
+        if "original_content" not in dataset_columns:
+            binary_type = (
+                "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
+            )
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        f"ALTER TABLE datasets "
+                        f"ADD COLUMN original_content {binary_type}"
+                    )
+                )
+
+        logging.getLogger("factorymind").info(
+            "Database tables verified and initialized"
+        )
+    # except SQLAlchemyError as exc:
+    #     logging.getLogger("factorymind").error(f"Database table initialization notice: {exc}")
+    # yield
     except SQLAlchemyError as exc:
-        logging.getLogger("factorymind").error(f"Database table initialization notice: {exc}")
+        logging.getLogger("factorymind").exception(
+            "Database initialization failed"
+        )
+        raise RuntimeError("Database initialization failed") from exc
+
     yield
 
 

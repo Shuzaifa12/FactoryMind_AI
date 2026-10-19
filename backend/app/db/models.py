@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
 )
@@ -40,6 +41,7 @@ class Dataset(_Common, Base):
     is_simulated: Mapped[bool] = mapped_column(Boolean, default=False)
     original_filename: Mapped[str | None] = mapped_column(String(300), nullable=True)
     stored_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    original_content: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     file_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # uploaded | mapped | processing | ready | failed

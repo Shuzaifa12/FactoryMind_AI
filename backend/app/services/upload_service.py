@@ -2,7 +2,6 @@
 
 import io
 import os
-from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
@@ -20,6 +19,21 @@ from app.schemas.dataset import (
 )
 
 settings = get_settings()
+
+def read_dataset_content(dataset: Dataset) -> bytes:
+    """Read uploaded content from the database, with legacy file fallback."""
+    if dataset.original_content is not None:
+        return bytes(dataset.original_content)
+
+    # Compatibility for datasets uploaded before database-backed storage.
+    if dataset.stored_path and os.path.isfile(dataset.stored_path):
+        with open(dataset.stored_path, "rb") as file:
+            return file.read()
+
+    raise AppError(
+        code="STORED_FILE_MISSING",
+        message="The dataset file is unavailable. Please upload the dataset again.",
+    )
 
 
 def parse_numeric_series(series: pd.Series) -> list[float | None]:
@@ -145,11 +159,15 @@ def create_uploaded_dataset(
     df, file_type, warnings = parse_and_validate_file(content, filename)
 
     # Save content to disk in uploads directory
-    os.makedirs(settings.upload_dir, exist_ok=True)
-    safe_filename = f"{int(datetime.now(UTC).timestamp())}_{filename}"
-    file_path = os.path.join(settings.upload_dir, safe_filename)
-    with open(file_path, "wb") as f:
-        f.write(content)
+    # os.makedirs(settings.upload_dir, exist_ok=True)
+    # safe_filename = f"{int(datetime.now(UTC).timestamp())}_{filename}"
+    # file_path = os.path.join(settings.upload_dir, safe_filename)
+    # with open(file_path, "wb") as f:
+    #     f.write(content)
+
+    # Store file bytes in the database because serverless filesystems
+    # may be read-only or ephemeral.
+    file_path = None
 
     total_rows = len(df)
     headers = list(df.columns)
@@ -166,6 +184,7 @@ def create_uploaded_dataset(
         is_simulated=False,
         original_filename=filename,
         stored_path=file_path,
+        original_content=content,
         file_type=file_type,
         size_bytes=len(content),
         status="uploaded",
@@ -203,11 +222,13 @@ def apply_column_mapping(
     if not dataset:
         raise AppError(code="DATASET_NOT_FOUND", message=f"Dataset {dataset_id} not found.")
 
-    if not dataset.stored_path or not os.path.exists(dataset.stored_path):
-        raise AppError(code="STORED_FILE_MISSING", message="Underlying dataset file could not be found on server.")
+    # if not dataset.stored_path or not os.path.exists(dataset.stored_path):
+    #     raise AppError(code="STORED_FILE_MISSING", message="Underlying dataset file could not be found on server.")
 
-    with open(dataset.stored_path, "rb") as f:
-        content = f.read()
+    content = read_dataset_content(dataset)
+
+    # with open(dataset.stored_path, "rb") as f: # type: ignore
+    #     content = f.read()
 
     df, _, _ = parse_and_validate_file(content, dataset.original_filename or "data.csv")
 
@@ -325,11 +346,12 @@ def ingest_and_process_dataset(
     if not dataset.column_mapping:
         raise AppError(code="DATASET_NOT_MAPPED", message="Dataset columns must be mapped before processing.")
 
-    if not dataset.stored_path or not os.path.exists(dataset.stored_path):
-        raise AppError(code="STORED_FILE_MISSING", message="Underlying dataset file could not be found on server.")
+    # if not dataset.stored_path or not os.path.exists(dataset.stored_path):
+    #     raise AppError(code="STORED_FILE_MISSING", message="Underlying dataset file could not be found on server.")
 
-    with open(dataset.stored_path, "rb") as f:
-        content = f.read()
+    # with open(dataset.stored_path, "rb") as f:
+    #     content = f.read()
+    content = read_dataset_content(dataset)
 
     df, _, _ = parse_and_validate_file(content, dataset.original_filename or "data.csv")
     mapping = dataset.column_mapping
