@@ -114,7 +114,7 @@ def process_assistant_query(db: Session, dataset_id: int, prompt: str, language:
     if requested_alert_id is not None:
         target_alert = next((a for a in alerts if a.id == requested_alert_id), None)
     elif mentioned_machine:
-        target_alert = next((a for a in alerts if a.machine_id == mentioned_machine.external_id and a.status == "open"), None)
+         target_alert = next((a for a in alerts if a.machine_id == mentioned_machine.id and a.status == "open"), None)
 
     tool_calls = []
     evidence_cited = []
@@ -136,7 +136,8 @@ def process_assistant_query(db: Session, dataset_id: int, prompt: str, language:
             responseText = f"### Investigation Error:\nAlert #{requested_alert_id} could not be found in the active dataset (**{dataset.name}**). Please verify the alert ID or select a valid alert from the active dataset telemetry."
 
     elif target_alert:
-        mach = next((m for m in machines if m.external_id == target_alert.machine_id), None)
+        mach = next((m for m in machines if m.id == target_alert.machine_id), None)
+        machine_label = mach.external_id if mach else str(target_alert.machine_id)
         recs = [m for m in maintenance if m.machine_id == target_alert.machine_id]
         impact = target_alert.impact_estimates[0] if target_alert.impact_estimates else None
 
@@ -157,20 +158,20 @@ def process_assistant_query(db: Session, dataset_id: int, prompt: str, language:
         })
 
         for ev in (target_alert.evidence or []):
-            evidence_cited.append(f"{target_alert.machine_id} {ev.get('feature', 'Sensor')}: {ev.get('observed_value')} {ev.get('unit')} (Baseline {ev.get('baseline_median')})")
+            evidence_cited.append(f"{machine_label} {ev.get('feature', 'Sensor')}: {ev.get('observed_value')} {ev.get('unit')} (Baseline {ev.get('baseline_median')})")
 
         total_impact = impact.total_estimated_impact if impact else 0.0
 
         if is_urdu:
-            responseText = f"### {target_alert.machine_id} تفتیشی رپورٹ (الرٹ #{target_alert.id}):\n" \
+            responseText = f"### {machine_label} تفتیشی رپورٹ (الرٹ #{target_alert.id}):\n" \
                            f"1. **ڈیٹاسیٹ کا ماخذ**: فعال ڈیٹاسیٹ: **{dataset.name}** (ID: {dataset.id})\n" \
-                           f"2. **بے ضابطگی کی تفصیل**: مشین {target_alert.machine_id} پر فعال انحراف پایا گیا۔\n" \
+                           f"2. **بے ضابطگی کی تفصیل**: مشین {machine_label} پر فعال انحراف پایا گیا۔\n" \
                            f"3. **دیکھ بھال کا ریکارڈ**: {len(recs)} سابقہ ریکارڈز موجود ہیں۔\n" \
                            f"4. **تخمینہ مالی اثر**: کل متوقع اثر **${total_impact:,.2f}**۔\n" \
                            f"5. **تجویز کردہ اقدامات**:\n" \
                            f"   - فوری مکینیکل اور سینسر معائنہ کریں۔"
         else:
-            responseText = f"### Investigation for {target_alert.machine_id} ({mach.name if mach else target_alert.machine_id}) [Alert #{target_alert.id}]:\n" \
+            responseText = f"### Investigation for {machine_label} ({mach.name if mach else machine_label}) [Alert #{target_alert.id}]:\n" \
                            f"1. **Dataset Grounding**: Active Dataset: **{dataset.name}** (ID: {dataset.id}) — {('Simulated Demo' if dataset.is_simulated else 'User Uploaded')}\n" \
                            f"2. **Telemetry Deviation**: Anomaly score **{target_alert.anomaly_score}** with severity **{target_alert.severity}**.\n" \
                            f"3. **Maintenance Correlation**: {len(recs)} historical maintenance record(s) found for this asset in the active dataset.\n" \
