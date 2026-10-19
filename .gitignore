@@ -33,3 +33,8 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Private development prompts and progress notes
+/CLAUDE.md
+/PROGRESS.md
+/docs/PROGRESS.md
